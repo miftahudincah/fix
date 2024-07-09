@@ -70,7 +70,15 @@ const DetailProduk = () => {
   const handleBeliClick = async () => {
     try {
       if (!user) {
-        console.log('User belum login!');
+        toast.error('Silahkan login terlebih dahulu!', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
         return;
       }
 
