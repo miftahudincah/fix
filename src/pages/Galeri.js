@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { storage, firestore } from '../firebase'; // Pastikan path sesuai dengan lokasi file firebase.js
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { addDoc, collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
-import { Button, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
+import { addDoc, collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { Button, Form, Container, Row, Col, Card, Spinner, Modal } from 'react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
@@ -18,6 +18,9 @@ const Galeri = () => {
   const [selectedCategory, setSelectedCategory] = useState('all'); // State untuk kategori filter
   const [loading, setLoading] = useState(false); // State untuk status loading
   const [showUploadForm, setShowUploadForm] = useState(false); // State untuk menampilkan form upload
+  const [showRenameModal, setShowRenameModal] = useState(false); // State untuk menampilkan modal update nama
+  const [renameFileId, setRenameFileId] = useState(null); // State untuk menyimpan id file yang akan diperbarui nama
+  const [renameFileName, setRenameFileName] = useState(''); // State untuk menyimpan nama file yang baru
   const navigate = useNavigate(); // Menggunakan useNavigate untuk navigasi
 
   useEffect(() => {
@@ -78,6 +81,32 @@ const Galeri = () => {
       setLoading(false); // Set loading state to false
       setShowUploadForm(false); // Hide upload form after upload
       fetchFiles(); // Refresh files list after upload
+    }
+  };
+
+  const handleOpenRenameModal = (id, name) => {
+    setRenameFileId(id);
+    setRenameFileName(name);
+    setShowRenameModal(true);
+  };
+
+  const handleCloseRenameModal = () => {
+    setRenameFileId(null);
+    setRenameFileName('');
+    setShowRenameModal(false);
+  };
+
+  const handleUpdateFileName = async () => {
+    try {
+      await updateDoc(doc(firestore, 'galeri', renameFileId), {
+        name: renameFileName,
+      });
+      toast.success('Nama file diperbarui!');
+      fetchFiles(); // Refresh files list after update
+    } catch (error) {
+      toast.error('Gagal memperbarui nama file. Silakan coba lagi.');
+    } finally {
+      handleCloseRenameModal();
     }
   };
 
@@ -203,11 +232,11 @@ const Galeri = () => {
                   <video className="card-img-top" src={file.url} controls style={{ maxHeight: '200px' }} />
                 ) : (
                   <Card.Img
-                  variant="top"
-                  src={file.url} // Memperbaiki pengambilan URL gambar dari array imageURLs
-                  className="product-image"
-                  style={{ height: '300px', objectFit: 'cover' }} // Atur tinggi gambar dan penyesuaian ukuran di sini
-                />
+                    variant="top"
+                    src={file.url} // Memperbaiki pengambilan URL gambar dari array imageURLs
+                    className="product-image"
+                    style={{ height: '300px', objectFit: 'cover' }} // Atur tinggi gambar dan penyesuaian ukuran di sini
+                  />
                 )}
               </a>
               <Card.Body>
@@ -215,13 +244,56 @@ const Galeri = () => {
                 <Card.Text>Kategori: {file.category}</Card.Text>
                 <Card.Text>Uploaded by: {file.user}</Card.Text>
                 {currentUser && currentUser.email === file.user && (
-                  <Button variant="danger" onClick={() => handleDeleteFile(file.id, file.url)}>Hapus</Button>
+                  <>
+                    <Button variant="primary" onClick={() => handleOpenRenameModal(file.id, file.name)}>
+                      Update Nama
+                    </Button>
+                    <Button variant="danger" onClick={() => handleDeleteFile(file.id, file.url)} className="mt-2">
+                      Hapus
+                    </Button>
+                  </>
+                )}
+                {currentUser && currentUser.role === 'admin' && (
+                  <>
+                    <Button variant="primary" onClick={() => handleOpenRenameModal(file.id, file.name)}>
+                      Update Nama
+                    </Button>
+                    <Button variant="danger" onClick={() => handleDeleteFile(file.id, file.url)} className="mt-2">
+                      Hapus
+                    </Button>
+                  </>
                 )}
               </Card.Body>
             </Card>
           </Col>
         ))}
       </Row>
+
+      {/* Modal Update Nama */}
+      <Modal show={showRenameModal} onHide={handleCloseRenameModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Update Nama File</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group controlId="formRenameFileName" className="mb-3">
+            <Form.Label>Nama File Baru</Form.Label>
+            <Form.Control
+              type="text"
+              value={renameFileName}
+              onChange={(e) => setRenameFileName(e.target.value)}
+              required
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseRenameModal}>
+            Batal
+          </Button>
+          <Button variant="primary" onClick={handleUpdateFileName}>
+            Simpan Perubahan
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };
