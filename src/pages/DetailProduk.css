@@ -1,0 +1,6 @@
+.product-image {
+    width: 300px; /* Atur lebar gambar */
+    height: auto; /* Otomatis menyesuaikan tinggi agar tidak terdistorsi */
+    object-fit: cover; /* Memotong gambar jika ukuran asli lebih besar */
+  }
+  
