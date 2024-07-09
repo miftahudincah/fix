@@ -1,22 +1,21 @@
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
-import 'firebase/compat/storage'
-const firebaseConfig = {
-    apiKey: "AIzaSyBBvljkYLrcxTf_cZbgSvWYcKKFEb0nE5M",
-    authDomain: "trainersmk-428403.firebaseapp.com",
-    databaseURL: "https://trainersmk-428403-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "trainersmk-428403",
-    storageBucket: "trainersmk-428403.appspot.com",
-    messagingSenderId: "482660643675",
-    appId: "1:482660643675:web:8ca11fb6ae8d9cf4a1607e",
-    measurementId: "G-8KXM02H5MH"
-  };
-  
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
-// Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-export const auth = app.auth();
-export const firestore = app.firestore();
-export const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
-export const storage = app.storage();
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+};
+
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const firestore = getFirestore(app);
+export const googleAuthProvider = new GoogleAuthProvider();
+export const storage = getStorage(app);
