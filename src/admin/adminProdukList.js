@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Toast } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Toast, Form } from 'react-bootstrap';
 import { firestore, storage } from '../firebase'; // Sesuaikan path dengan lokasi file firebase.js
 import { useAuth } from '../contexts/AuthContext'; // Pastikan path sesuai dengan lokasi file AuthContext.js
 import { useNavigate } from 'react-router-dom'; // Menggunakan useNavigate
@@ -12,6 +12,8 @@ const ListProduk = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // Default type adalah success
+
+  const [editProduk, setEditProduk] = useState({ id: '', nama: '', deskripsi: '', harga: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,6 +67,32 @@ const ListProduk = () => {
     }
   };
 
+  const handleEditProduk = async () => {
+    try {
+      const { id, nama, deskripsi, harga } = editProduk;
+      await firestore.collection('produk').doc(id).update({
+        nama,
+        deskripsi,
+        harga
+      });
+
+      // Update state untuk memperbarui daftar produk setelah edit
+      setProdukList(prevList =>
+        prevList.map(produk => (produk.id === id ? { ...produk, nama, deskripsi, harga } : produk))
+      );
+
+      setToastType('success');
+      setToastMessage('Produk berhasil diperbarui!');
+      setShowToast(true);
+      setEditProduk({ id: '', nama: '', deskripsi: '', harga: 0 }); // Reset form edit produk
+    } catch (error) {
+      console.error('Error updating product: ', error);
+      setToastType('error');
+      setToastMessage('Gagal memperbarui produk. Silakan coba lagi.');
+      setShowToast(true);
+    }
+  };
+
   return (
     <Container className="mt-4">
       <h2>Daftar Produk</h2>
@@ -88,9 +116,43 @@ const ListProduk = () => {
                 <Card.Title>{produk.nama}</Card.Title>
                 <Card.Text>{produk.deskripsi}</Card.Text>
                 <Card.Text>Harga: ${produk.harga}</Card.Text>
-                <Button variant="danger" onClick={() => handleDeleteProduk(produk.id, produk.imageURL)}>Hapus</Button>
+
+                {/* Tombol untuk edit produk */}
+                <Button variant="primary" onClick={() => setEditProduk({ id: produk.id, nama: produk.nama, deskripsi: produk.deskripsi, harga: produk.harga })}>
+                  Edit
+                </Button>
+
+                <Button variant="danger" onClick={() => handleDeleteProduk(produk.id, produk.imageURL)} className="ml-2">
+                  Hapus
+                </Button>
               </Card.Body>
             </Card>
+
+            {/* Form edit produk */}
+            {editProduk.id === produk.id && (
+              <Card className="mt-2">
+                <Card.Body>
+                  <Form.Group>
+                    <Form.Label>Nama Produk</Form.Label>
+                    <Form.Control type="text" value={editProduk.nama} onChange={e => setEditProduk({ ...editProduk, nama: e.target.value })} />
+                  </Form.Group>
+                  <Form.Group>
+                    <Form.Label>Deskripsi Produk</Form.Label>
+                    <Form.Control as="textarea" rows={3} value={editProduk.deskripsi} onChange={e => setEditProduk({ ...editProduk, deskripsi: e.target.value })} />
+                  </Form.Group>
+                  <Form.Group>
+                    <Form.Label>Harga</Form.Label>
+                    <Form.Control type="number" value={editProduk.harga} onChange={e => setEditProduk({ ...editProduk, harga: e.target.value })} />
+                  </Form.Group>
+                  <Button variant="success" onClick={handleEditProduk}>
+                    Simpan
+                  </Button>
+                  <Button variant="secondary" className="ml-2" onClick={() => setEditProduk({ id: '', nama: '', deskripsi: '', harga: 0 })}>
+                    Batal
+                  </Button>
+                </Card.Body>
+              </Card>
+            )}
           </Col>
         ))}
       </Row>
